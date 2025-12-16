@@ -38,24 +38,35 @@ jobs:
 
   DeployDev:
     name: Deploy to Dev
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request'
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
-      name: development
+      name: Development
       url: "https://finflowapi-development.up.railway.app"
     steps:
       - name: Deploy
-        run: echo "Deploying to development"
+        run: echo I am deploying!
 
-  DeployProduction:
-    name: Deploy to Production
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  DeployStaging:
+    name: Deploy to Staging
+    if: github.event.ref == 'refs/heads/main'
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
-      name: production
+      name: Staging
+      url: "https://finflowapi-staging.up.railway.app"
+    steps:
+      - name: Deploy
+        run: echo I am deploying!
+
+  DeployProd:
+    name: Deploy to Production
+    needs: [DeployStaging]
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
       url: "https://finflowapi-production.up.railway.app"
     steps:
       - name: Deploy
-        run: echo "Deploying to production"
+        run: echo I am deploying!
