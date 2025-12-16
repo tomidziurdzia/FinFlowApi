@@ -1,10 +1,10 @@
 name: CI + CD
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    branches: [development, staging, main]
+  push:
+    branches: [development, staging, main]
   workflow_dispatch:
 
 jobs:
@@ -36,37 +36,44 @@ jobs:
       - name: Test
         run: go test -v ./...
 
-  DeployDev:
-    name: Deploy to Dev
-    if: github.event_name == 'pull_request'
-    needs: [Build]
+    deploy-dev:
+    name: Deploy to Development
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
     environment:
       name: Development
-      url: "https://finflowapi-development.up.railway.app"
+      url: https://finflowapi-development.up.railway.app
+    concurrency: deploy-development
     steps:
+      - uses: actions/checkout@v5
       - name: Deploy
-        run: echo I am deploying!
+        run: echo "Deploying to Development..."
 
-  DeployStaging:
+  deploy-staging:
     name: Deploy to Staging
-    if: github.event.ref == 'refs/heads/main'
-    needs: [Build]
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     environment:
       name: Staging
-      url: "https://finflowapi-staging.up.railway.app"
+      url: https://finflowapi-staging.up.railway.app
+    concurrency: deploy-staging
     steps:
+      - uses: actions/checkout@v5
       - name: Deploy
-        run: echo I am deploying!
+        run: echo "Deploying to Staging..."
 
-  DeployProd:
+  deploy-prod:
     name: Deploy to Production
-    needs: [DeployStaging]
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: Production
-      url: "https://finflowapi-production.up.railway.app"
+      url: https://finflowapi.up.railway.app
+    concurrency: deploy-production
     steps:
+      - uses: actions/checkout@v5
       - name: Deploy
-        run: echo I am deploying!
+        run: echo "Deploying to Production..."
