@@ -2,9 +2,9 @@ name: CI + CD
 
 on:
   push:
-    branches: [main]
+    branches: [development, staging, main]
   pull_request:
-    branches: [main]
+    branches: [development]
   workflow_dispatch:
 
 jobs:
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: Production
-      url: "https://finflowapi-production.up.railway.app"
+      url: "https://finflowapi.up.railway.app"
     steps:
       - name: Deploy
         run: echo I am deploying!
