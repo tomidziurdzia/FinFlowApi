@@ -6,14 +6,6 @@ on:
   pull_request:
     branches: [development]
   workflow_dispatch:
-    inputs:
-      deploy_target:
-        description: "Deploy target"
-        required: true
-        type: choice
-        options:
-          - staging
-          - production
 
 jobs:
   Build:
@@ -46,7 +38,7 @@ jobs:
 
   DeployDev:
     name: Deploy to Dev
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
@@ -58,7 +50,7 @@ jobs:
 
   DeployStaging:
     name: Deploy to Staging
-    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_target == 'staging' || github.event.inputs.deploy_target == 'production')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/staging')
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
@@ -70,7 +62,7 @@ jobs:
 
   DeployProd:
     name: Deploy to Production
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target == 'production'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs: [Build, DeployStaging]
     runs-on: ubuntu-latest
     environment:
