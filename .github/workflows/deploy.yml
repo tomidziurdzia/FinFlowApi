@@ -1,14 +1,14 @@
-name: Audit
+name: CI + CD
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   Build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -48,21 +48,9 @@ jobs:
       - name: Deploy
         run: echo "Deploying to development"
 
-  DeployStaging:
-    name: Deploy to Staging
-    if: github.ref == 'refs/heads/staging'
-    needs: [Build]
-    runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: "https://finflowapi-staging.up.railway.app"
-    steps:
-      - name: Deploy
-        run: echo "Deploying to staging"
-
   DeployProduction:
     name: Deploy to Production
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
