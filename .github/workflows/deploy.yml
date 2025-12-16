@@ -2,9 +2,9 @@ name: CI + CD
 
 on:
   push:
-    branches: [development, staging, main]
+    branches: [main]
   pull_request:
-    branches: [development]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
