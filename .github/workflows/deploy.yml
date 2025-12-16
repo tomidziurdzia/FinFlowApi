@@ -37,37 +37,37 @@ jobs:
         run: go test -v ./...
 
   DeployDev:
-      name: Deploy to Dev
-      if: github.event_name == 'pull_request'
-      needs: [Build]
-      runs-on: ubuntu-latest
-      environment:
-        name: development
-        url: "https://finflowapi-development.up.railway.app"
-      steps:
-        - name: Deploy
-          run: echo "Deploying to development"
+    name: Deploy to Dev
+    if: github.event_name == 'pull_request'
+    needs: [Build]
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: "https://finflowapi-development.up.railway.app"
+    steps:
+      - name: Deploy
+        run: echo "Deploying to development"
 
-    DeployStaging:
-      name: Deploy to Staging
-      if: github.ref == 'refs/heads/staging'
-      needs: [Build]
-      runs-on: ubuntu-latest
-      environment:
-        name: staging
-        url: "https://finflowapi-staging.up.railway.app"
-      steps:
-        - name: Deploy
-          run: echo "Deploying to staging"
+  DeployStaging:
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/staging'
+    needs: [Build]
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: "https://finflowapi-staging.up.railway.app"
+    steps:
+      - name: Deploy
+        run: echo "Deploying to staging"
 
-    DeployProduction:
-      name: Deploy to Production
-      if: github.ref == 'refs/heads/main'
-      needs: [Build]
-      runs-on: ubuntu-latest
-      environment:
-        name: production
-        url: "https://finflowapi-production.up.railway.app"
-      steps:
-        - name: Deploy
-          run: echo "Deploying to production"
+  DeployProduction:
+    name: Deploy to Production
+    if: github.ref == 'refs/heads/main'
+    needs: [Build]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: "https://finflowapi-production.up.railway.app"
+    steps:
+      - name: Deploy
+        run: echo "Deploying to production"
