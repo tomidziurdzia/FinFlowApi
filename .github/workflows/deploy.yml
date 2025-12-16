@@ -2,10 +2,18 @@ name: CI + CD
 
 on:
   push:
-    branches: [main]
+    branches: [development, staging, main]
   pull_request:
-    branches: [main]
+    branches: [development]
   workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "Deploy target"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   Build:
@@ -38,7 +46,7 @@ jobs:
 
   DeployDev:
     name: Deploy to Dev
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
@@ -46,11 +54,11 @@ jobs:
       url: "https://finflowapi-development.up.railway.app"
     steps:
       - name: Deploy
-        run: echo I am deploying!
+        run: echo "Deploying to Development..."
 
   DeployStaging:
     name: Deploy to Staging
-    if: github.event.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_target == 'staging' || github.event.inputs.deploy_target == 'production')
     needs: [Build]
     runs-on: ubuntu-latest
     environment:
@@ -58,15 +66,16 @@ jobs:
       url: "https://finflowapi-staging.up.railway.app"
     steps:
       - name: Deploy
-        run: echo I am deploying!
+        run: echo "Deploying to Staging..."
 
   DeployProd:
     name: Deploy to Production
-    needs: [DeployStaging]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target == 'production'
+    needs: [Build, DeployStaging]
     runs-on: ubuntu-latest
     environment:
       name: Production
       url: "https://finflowapi-production.up.railway.app"
     steps:
       - name: Deploy
-        run: echo I am deploying!
+        run: echo "Deploying to Production..."
