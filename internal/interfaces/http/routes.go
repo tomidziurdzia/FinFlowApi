@@ -2,7 +2,7 @@ package http
 
 import (
 	"net/http"
-	
+
 	usershttp "fin-flow-api/internal/users/interfaces/http"
 )
 
