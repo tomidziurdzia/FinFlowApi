@@ -1,26 +1,17 @@
 package main
 
 import (
+	"fin-flow-api/internal/bootstrap"
 	"log"
-	"os"
 )
 
 func main() {
-	addr := os.Getenv("PORT")
-	if addr == "" {
-		addr = "8080"
-	}
-	addr = ":" + addr
-
-	cfg := config{
-		addr: addr,
+	app, err := bootstrap.NewApp()
+	if err != nil {
+		log.Fatal("failed to initialize app: ", err)
 	}
 
-	app := &application{
-		config: cfg,
+	if err := app.Server.Run(); err != nil {
+		log.Fatal("server error: ", err)
 	}
-
-	mux := app.mount()
-
-	log.Fatal(app.run(mux))
 }
