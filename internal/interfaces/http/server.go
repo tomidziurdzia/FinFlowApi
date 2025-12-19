@@ -69,6 +69,6 @@ func normalizeAddr(addr string) string {
 	if addr == "" {
 		addr = "8080"
 	}
-	addr = strings.TrimPrefix(addr, ":")
+	addr = strings.TrimLeft(addr, ":")
 	return ":" + addr
 }

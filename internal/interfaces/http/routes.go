@@ -7,9 +7,7 @@ import (
 )
 
 func SetupRoutes(mux *http.ServeMux) {
-	// Health check
 	mux.HandleFunc("/health", HealthHandler)
 	
-	// User routes
 	usershttp.SetupRoutes(mux)
 }
