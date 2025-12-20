@@ -1,6 +1,5 @@
 package domain
 
-// UserRepository defines the interface for user repository operations
 type UserRepository interface {
 	Create(user *User) error
 	GetByID(id string) (*User, error)

@@ -7,17 +7,17 @@ import (
 type User struct {
 	domain.Entity
 	
-	AuthID    string
+	ID        string
 	FirstName string
 	LastName  string
 	Email     string
 	Password  string
 }
 
-func NewUser(id, authID, firstName, lastName, email, password, createdBy string) *User {
+func NewUser(id, firstName, lastName, email, password, createdBy string) *User {
 	return &User{
 		Entity:    domain.NewEntity(id, createdBy),
-		AuthID:    authID,
+		ID:        id,
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,
