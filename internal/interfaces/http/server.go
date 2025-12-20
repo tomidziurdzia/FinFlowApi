@@ -2,6 +2,8 @@ package http
 
 import (
 	"context"
+	"fin-flow-api/internal/shared/interface/jwt"
+	"fin-flow-api/internal/shared/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -25,9 +27,11 @@ type Config struct {
 	ShutdownTimeout time.Duration
 }
 
-func NewServer(cfg Config) *Server {
+func NewServer(cfg Config, jwtService jwt.Service) *Server {
 	mux := http.NewServeMux()
-	SetupRoutes(mux)
+	SetupRoutes(mux, jwtService)
+	
+	handler := middleware.CORS(mux)
 
 	readTimeout := cfg.ReadTimeout
 	if readTimeout == 0 {
@@ -48,7 +52,7 @@ func NewServer(cfg Config) *Server {
 
 	srv := &http.Server{
 		Addr:              normalizeAddr(cfg.Addr),
-		Handler:           mux,
+		Handler:           handler,
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHeaderTimeout,
 		WriteTimeout:      writeTimeout,

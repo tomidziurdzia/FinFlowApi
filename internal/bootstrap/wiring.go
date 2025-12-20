@@ -6,9 +6,11 @@ import (
 	"fin-flow-api/internal/infrastructure/config"
 	"fin-flow-api/internal/infrastructure/db"
 	"fin-flow-api/internal/infrastructure/hash"
+	"fin-flow-api/internal/infrastructure/jwt"
 	httptransport "fin-flow-api/internal/interfaces/http"
 	userservices "fin-flow-api/internal/users/application/services"
 	userpostgres "fin-flow-api/internal/users/infrastructure/persistence/postgres"
+	usershttp "fin-flow-api/internal/users/interfaces/http"
 )
 
 type App struct {
@@ -30,10 +32,17 @@ func NewApp() (*App, error) {
 	}
 
 	hashService := hash.NewService()
+	jwtService := jwt.NewService()
 
 	userRepo := userpostgres.NewRepository(database.Pool)
 
 	userService := userservices.NewUserService(userRepo, hashService, cfg.App.SystemUser)
+
+	userHandler := usershttp.NewHandler(userService)
+	usershttp.SetHandler(userHandler)
+
+	authHandler := usershttp.NewAuthHandler(userRepo, hashService, jwtService)
+	usershttp.SetAuthHandler(authHandler)
 
 	httpCfg := httptransport.Config{
 		Addr:              cfg.Port,
@@ -43,7 +52,7 @@ func NewApp() (*App, error) {
 		IdleTimeout:        cfg.Server.IdleTimeout,
 		ShutdownTimeout:   cfg.Server.ShutdownTimeout,
 	}
-	srv := httptransport.NewServer(httpCfg)
+	srv := httptransport.NewServer(httpCfg, jwtService)
 
 	log.Println("Application initialized successfully")
 
