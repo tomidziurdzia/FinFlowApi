@@ -22,7 +22,7 @@ type Claims struct {
 func NewService() jwtinterface.Service {
 	secretKey := os.Getenv("JWT_SECRET")
 	if secretKey == "" {
-		secretKey = "your-secret-key-change-in-production" // Default, debe cambiarse
+		secretKey = "your-secret-key-change-in-production"
 	}
 	return &Service{
 		secretKey: []byte(secretKey),
