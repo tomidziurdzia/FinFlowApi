@@ -8,7 +8,8 @@ import (
 
 func TestSetupRoutes(t *testing.T) {
 	mux := http.NewServeMux()
-	SetupRoutes(mux)
+	jwtService := newMockJWTService()
+	SetupRoutes(mux, jwtService)
 
 	// Test health endpoint
 	req, err := http.NewRequest("GET", "/health", nil)
@@ -36,4 +37,3 @@ func TestSetupRoutes(t *testing.T) {
 		t.Errorf("non-existent endpoint returned wrong status code: got %v want %v", status, http.StatusNotFound)
 	}
 }
-

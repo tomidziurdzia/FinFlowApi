@@ -19,7 +19,8 @@ func TestNewServer(t *testing.T) {
 		Addr: port,
 	}
 
-	server := NewServer(cfg)
+	jwtService := newMockJWTService()
+	server := NewServer(cfg, jwtService)
 
 	if server == nil {
 		t.Fatal("NewServer returned nil")
@@ -63,7 +64,8 @@ func TestServerShutdown(t *testing.T) {
 		Addr: "0", // Use random port
 	}
 
-	server := NewServer(cfg)
+	jwtService := newMockJWTService()
+	server := NewServer(cfg, jwtService)
 
 	// Start server in background
 	errChan := make(chan error, 1)
@@ -93,4 +95,3 @@ func TestServerShutdown(t *testing.T) {
 		t.Error("server did not stop in time")
 	}
 }
-
