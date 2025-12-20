@@ -10,6 +10,7 @@ type mockUserRepository struct {
 	createFunc    func(user *domain.User) error
 	getByIDFunc   func(id string) (*domain.User, error)
 	getByEmailFunc func(email string) (*domain.User, error)
+	getByAuthIDFunc func(authID string) (*domain.User, error)
 	updateFunc    func(user *domain.User) error
 	deleteFunc    func(id string) error
 	listFunc      func() ([]*domain.User, error)
@@ -46,6 +47,18 @@ func (m *mockUserRepository) GetByEmail(email string) (*domain.User, error) {
 	}
 	for _, user := range m.users {
 		if user.Email == email {
+			return user, nil
+		}
+	}
+	return nil, errors.New("user not found")
+}
+
+func (m *mockUserRepository) GetByAuthID(authID string) (*domain.User, error) {
+	if m.getByAuthIDFunc != nil {
+		return m.getByAuthIDFunc(authID)
+	}
+	for _, user := range m.users {
+		if user.AuthID == authID {
 			return user, nil
 		}
 	}
