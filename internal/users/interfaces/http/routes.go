@@ -20,6 +20,9 @@ func mountUsers(mux *http.ServeMux, jwtService jwt.Service) {
 	
 	protectedHandler := middleware.RequireAuth(jwtService)(http.HandlerFunc(handleUsersResource))
 	mux.Handle("/users/", protectedHandler)
+	
+	syncHandler := middleware.RequireClerkAuth(http.HandlerFunc(userHandler.SyncUser))
+	mux.Handle("/users/sync", syncHandler)
 }
 
 func handleUsersCollection(jwtService jwt.Service) http.HandlerFunc {

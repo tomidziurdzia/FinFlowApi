@@ -102,3 +102,47 @@ func (s *UserService) List(req queries.ListUsersRequest) ([]*queries.UserRespons
 	return responses, nil
 }
 
+func (s *UserService) SyncByAuthID(authID, firstName, lastName string) (*queries.UserResponse, error) {
+	user, err := s.repository.GetByAuthID(authID)
+	if err != nil {
+		if err.Error() == "user not found" {
+			id := uuid.New().String()
+			newUser := domain.NewUserWithAuthID(
+				id,
+				authID,
+				firstName,
+				lastName,
+				"",
+				"",
+				s.systemUser,
+			)
+			
+			if createErr := s.repository.Create(newUser); createErr != nil {
+				return nil, createErr
+			}
+			
+			return &queries.UserResponse{
+				ID:        newUser.ID,
+				FirstName: newUser.FirstName,
+				LastName:  newUser.LastName,
+				Email:     newUser.Email,
+				CreatedAt: newUser.CreatedAt,
+				UpdatedAt: newUser.ModifiedAt,
+				CreatedBy: newUser.CreatedBy,
+				UpdatedBy: newUser.ModifiedBy,
+			}, nil
+		}
+		return nil, err
+	}
+
+	return &queries.UserResponse{
+		ID:        user.ID,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.ModifiedAt,
+		CreatedBy: user.CreatedBy,
+		UpdatedBy: user.ModifiedBy,
+	}, nil
+}

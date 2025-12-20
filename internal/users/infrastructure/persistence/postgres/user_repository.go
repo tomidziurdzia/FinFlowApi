@@ -21,14 +21,15 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) Create(user *domain.User) error {
 	query := `
-		INSERT INTO users (id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO users (id, auth_id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
 	_, err := r.pool.Exec(
 		context.Background(),
 		query,
 		user.ID,
+		user.AuthID,
 		user.FirstName,
 		user.LastName,
 		user.Email,
@@ -48,7 +49,7 @@ func (r *Repository) Create(user *domain.User) error {
 
 func (r *Repository) GetByID(id string) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
+		SELECT id, auth_id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
 		FROM users
 		WHERE id = $1
 	`
@@ -56,6 +57,7 @@ func (r *Repository) GetByID(id string) (*domain.User, error) {
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, id).Scan(
 		&user.ID,
+		&user.AuthID,
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
@@ -78,7 +80,7 @@ func (r *Repository) GetByID(id string) (*domain.User, error) {
 
 func (r *Repository) GetByEmail(email string) (*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
+		SELECT id, auth_id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
 		FROM users
 		WHERE email = $1
 	`
@@ -86,6 +88,38 @@ func (r *Repository) GetByEmail(email string) (*domain.User, error) {
 	var user domain.User
 	err := r.pool.QueryRow(context.Background(), query, email).Scan(
 		&user.ID,
+		&user.AuthID,
+		&user.FirstName,
+		&user.LastName,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+		&user.ModifiedAt,
+		&user.CreatedBy,
+		&user.ModifiedBy,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
+func (r *Repository) GetByAuthID(authID string) (*domain.User, error) {
+	query := `
+		SELECT id, auth_id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
+		FROM users
+		WHERE auth_id = $1
+	`
+
+	var user domain.User
+	err := r.pool.QueryRow(context.Background(), query, authID).Scan(
+		&user.ID,
+		&user.AuthID,
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
@@ -152,7 +186,7 @@ func (r *Repository) Delete(id string) error {
 
 func (r *Repository) List() ([]*domain.User, error) {
 	query := `
-		SELECT id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
+		SELECT id, auth_id, first_name, last_name, email, password, created_at, modified_at, created_by, modified_by
 		FROM users
 		ORDER BY created_at DESC
 	`
@@ -168,6 +202,7 @@ func (r *Repository) List() ([]*domain.User, error) {
 		var user domain.User
 		err := rows.Scan(
 			&user.ID,
+			&user.AuthID,
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
@@ -189,4 +224,3 @@ func (r *Repository) List() ([]*domain.User, error) {
 
 	return users, nil
 }
-
