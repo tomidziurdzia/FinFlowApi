@@ -40,7 +40,7 @@ func (r *Repository) Create(user *domain.User) error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("error al crear usuario: %w", err)
+		return fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return nil
@@ -68,9 +68,9 @@ func (r *Repository) GetByID(id string) (*domain.User, error) {
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("usuario no encontrado")
+			return nil, fmt.Errorf("user not found")
 		}
-		return nil, fmt.Errorf("error al obtener usuario: %w", err)
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	return &user, nil
@@ -98,9 +98,9 @@ func (r *Repository) GetByEmail(email string) (*domain.User, error) {
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("usuario no encontrado")
+			return nil, fmt.Errorf("user not found")
 		}
-		return nil, fmt.Errorf("error al obtener usuario: %w", err)
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	return &user, nil
@@ -125,11 +125,11 @@ func (r *Repository) Update(user *domain.User) error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("error al actualizar usuario: %w", err)
+		return fmt.Errorf("failed to update user: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return fmt.Errorf("usuario no encontrado")
+		return fmt.Errorf("user not found")
 	}
 
 	return nil
@@ -140,11 +140,11 @@ func (r *Repository) Delete(id string) error {
 
 	result, err := r.pool.Exec(context.Background(), query, id)
 	if err != nil {
-		return fmt.Errorf("error al eliminar usuario: %w", err)
+		return fmt.Errorf("failed to delete user: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return fmt.Errorf("usuario no encontrado")
+		return fmt.Errorf("user not found")
 	}
 
 	return nil
@@ -159,7 +159,7 @@ func (r *Repository) List() ([]*domain.User, error) {
 
 	rows, err := r.pool.Query(context.Background(), query)
 	if err != nil {
-		return nil, fmt.Errorf("error al listar usuarios: %w", err)
+		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 	defer rows.Close()
 
@@ -178,13 +178,13 @@ func (r *Repository) List() ([]*domain.User, error) {
 			&user.ModifiedBy,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error al escanear usuario: %w", err)
+			return nil, fmt.Errorf("failed to scan user: %w", err)
 		}
 		users = append(users, &user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error al iterar usuarios: %w", err)
+		return nil, fmt.Errorf("failed to iterate users: %w", err)
 	}
 
 	return users, nil

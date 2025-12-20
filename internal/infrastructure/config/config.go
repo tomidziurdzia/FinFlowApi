@@ -31,7 +31,7 @@ type AppConfig struct {
 }
 
 type DatabaseConfig struct {
-	DatabaseURL string // Railway/Heroku style: postgres://user:pass@host:port/dbname
+	DatabaseURL string
 	Host        string
 	Port        string
 	User        string
