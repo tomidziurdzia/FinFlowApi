@@ -88,6 +88,7 @@ func TestCORS_Headers(t *testing.T) {
 	corsHandler := CORS(handler)
 
 	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "http://localhost:3000")
 
 	rr := httptest.NewRecorder()
 	corsHandler.ServeHTTP(rr, req)
