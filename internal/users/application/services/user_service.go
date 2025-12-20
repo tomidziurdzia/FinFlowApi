@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fin-flow-api/internal/shared/interface/hash"
 	"fin-flow-api/internal/users/application/contracts/commands"
 	"fin-flow-api/internal/users/application/contracts/queries"
 	"fin-flow-api/internal/users/domain"
@@ -10,15 +11,22 @@ import (
 
 type UserService struct {
 	repository domain.UserRepository
+	hashService hash.Service
 }
 
-func NewUserService(repository domain.UserRepository) *UserService {
+func NewUserService(repository domain.UserRepository, hashService hash.Service) *UserService {
 	return &UserService{
 		repository: repository,
+		hashService: hashService,
 	}
 }
 
 func (s *UserService) Create(req commands.CreateUserRequest) error {
+	hashedPassword, err := s.hashService.Hash(req.Password)
+	if err != nil {
+		return err
+	}
+
 	id := uuid.New().String()
 
 	user := domain.NewUser(
@@ -26,7 +34,7 @@ func (s *UserService) Create(req commands.CreateUserRequest) error {
 		req.FirstName,
 		req.LastName,
 		req.Email,
-		req.Password,
+		hashedPassword,
 		"system",
 	)
 
