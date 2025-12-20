@@ -8,6 +8,7 @@ type User struct {
 	domain.Entity
 	
 	ID        string
+	AuthID    string
 	FirstName string
 	LastName  string
 	Email     string
@@ -18,6 +19,18 @@ func NewUser(id, firstName, lastName, email, password, createdBy string) *User {
 	return &User{
 		Entity:    domain.NewEntity(id, createdBy),
 		ID:        id,
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Password:  password,
+	}
+}
+
+func NewUserWithAuthID(id, authID, firstName, lastName, email, password, createdBy string) *User {
+	return &User{
+		Entity:    domain.NewEntity(id, createdBy),
+		ID:        id,
+		AuthID:    authID,
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,

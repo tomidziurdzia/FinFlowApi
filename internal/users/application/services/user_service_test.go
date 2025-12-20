@@ -51,6 +51,15 @@ func (m *mockRepository) GetByEmail(email string) (*domain.User, error) {
 	return nil, errors.New("user not found")
 }
 
+func (m *mockRepository) GetByAuthID(authID string) (*domain.User, error) {
+	for _, user := range m.users {
+		if user.AuthID == authID {
+			return user, nil
+		}
+	}
+	return nil, errors.New("user not found")
+}
+
 func (m *mockRepository) Update(user *domain.User) error {
 	if m.updateErr != nil {
 		return m.updateErr

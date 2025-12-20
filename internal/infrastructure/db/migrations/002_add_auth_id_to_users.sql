@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_id VARCHAR(255);
+CREATE UNIQUE INDEX IF NOT EXISTS users_auth_id_key ON users(auth_id) WHERE auth_id IS NOT NULL;
