@@ -269,6 +269,41 @@ user, err := handler.Handle(req)
 ### Requisitos
 
 - Go 1.25.5 o superior
+- PostgreSQL 12 o superior
+
+### Configuración
+
+1. **Crear archivo `.env`** basado en `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+2. **Configurar variables de entorno** en `.env`:
+
+```env
+PORT=8080
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=tu_password
+DB_NAME=finflow
+DB_SSLMODE=disable
+```
+
+3. **Crear la base de datos**:
+
+```bash
+createdb finflow
+# O usando psql:
+psql -U postgres -c "CREATE DATABASE finflow;"
+```
+
+4. **Ejecutar migraciones**:
+
+```bash
+psql -U postgres -d finflow -f internal/infrastructure/db/migrations/001_create_users_table.sql
+```
 
 ### Compilar
 
@@ -279,7 +314,9 @@ go build ./cmd/api
 ### Ejecutar
 
 ```bash
-PORT=8080 ./api
+./api
+# O con variables de entorno explícitas:
+PORT=8080 DB_HOST=localhost DB_USER=postgres DB_PASSWORD=password DB_NAME=finflow ./api
 ```
 
 ### Tests
@@ -337,12 +374,12 @@ type User struct {
 
 ## 🚀 Próximos Pasos
 
-1. Implementar repositorio en memoria completo
+1. ✅ Repositorio PostgreSQL implementado
 2. Conectar handlers HTTP con application layer
 3. Agregar validaciones
 4. Implementar autenticación/autorización
 5. Agregar más bounded contexts (Transactions, Accounts, etc.)
-6. Migrar a PostgreSQL
+6. Implementar sistema de migraciones automático
 
 ## 📚 Referencias
 

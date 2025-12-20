@@ -3,13 +3,20 @@ package http
 import (
 	"context"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 )
 
 func TestNewServer(t *testing.T) {
+	// Use environment variable with default fallback
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	cfg := Config{
-		Addr: "8080",
+		Addr: port,
 	}
 
 	server := NewServer(cfg)
@@ -22,8 +29,9 @@ func TestNewServer(t *testing.T) {
 		t.Fatal("httpServer is nil")
 	}
 
-	if server.httpServer.Addr != ":8080" {
-		t.Errorf("expected addr :8080, got %s", server.httpServer.Addr)
+	expectedAddr := ":" + port
+	if server.httpServer.Addr != expectedAddr {
+		t.Errorf("expected addr %s, got %s", expectedAddr, server.httpServer.Addr)
 	}
 }
 

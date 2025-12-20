@@ -12,12 +12,14 @@ import (
 type UserService struct {
 	repository domain.UserRepository
 	hashService hash.Service
+	systemUser  string
 }
 
-func NewUserService(repository domain.UserRepository, hashService hash.Service) *UserService {
+func NewUserService(repository domain.UserRepository, hashService hash.Service, systemUser string) *UserService {
 	return &UserService{
 		repository: repository,
 		hashService: hashService,
+		systemUser: systemUser,
 	}
 }
 
@@ -35,7 +37,7 @@ func (s *UserService) Create(req commands.CreateUserRequest) error {
 		req.LastName,
 		req.Email,
 		hashedPassword,
-		"system",
+		s.systemUser,
 	)
 
 	return s.repository.Create(user)
@@ -50,7 +52,7 @@ func (s *UserService) Update(req commands.UpdateUserRequest) error {
 	user.FirstName = req.FirstName
 	user.LastName = req.LastName
 	user.Email = req.Email
-	user.Entity.UpdateModified("system")
+	user.Entity.UpdateModified(s.systemUser)
 
 	return s.repository.Update(user)
 }

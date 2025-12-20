@@ -10,6 +10,7 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to initialize app: ", err)
 	}
+	defer app.Close()
 
 	if err := app.Server.Run(); err != nil {
 		log.Fatal("server error: ", err)
