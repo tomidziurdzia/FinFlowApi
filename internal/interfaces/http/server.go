@@ -12,28 +12,57 @@ import (
 )
 
 type Server struct {
-	httpServer *http.Server
+	httpServer     *http.Server
+	shutdownTimeout time.Duration
 }
 
 type Config struct {
-	Addr string
+	Addr            string
+	ReadTimeout     time.Duration
+	ReadHeaderTimeout time.Duration
+	WriteTimeout    time.Duration
+	IdleTimeout     time.Duration
+	ShutdownTimeout time.Duration
 }
 
 func NewServer(cfg Config) *Server {
 	mux := http.NewServeMux()
 	SetupRoutes(mux)
 
+	readTimeout := cfg.ReadTimeout
+	if readTimeout == 0 {
+		readTimeout = 10 * time.Second
+	}
+	readHeaderTimeout := cfg.ReadHeaderTimeout
+	if readHeaderTimeout == 0 {
+		readHeaderTimeout = 5 * time.Second
+	}
+	writeTimeout := cfg.WriteTimeout
+	if writeTimeout == 0 {
+		writeTimeout = 30 * time.Second
+	}
+	idleTimeout := cfg.IdleTimeout
+	if idleTimeout == 0 {
+		idleTimeout = 1 * time.Minute
+	}
+
 	srv := &http.Server{
 		Addr:              normalizeAddr(cfg.Addr),
 		Handler:           mux,
-		ReadTimeout:       time.Second * 10,
-		ReadHeaderTimeout: time.Second * 5,
-		WriteTimeout:      time.Second * 30,
-		IdleTimeout:       time.Minute,
+		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+	}
+
+	shutdownTimeout := cfg.ShutdownTimeout
+	if shutdownTimeout == 0 {
+		shutdownTimeout = 10 * time.Second
 	}
 
 	return &Server{
-		httpServer: srv,
+		httpServer:     srv,
+		shutdownTimeout: shutdownTimeout,
 	}
 }
 
@@ -54,7 +83,7 @@ func (s *Server) Run() error {
 		return err
 	case <-stop:
 		log.Println("shutting down server...")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), s.shutdownTimeout)
 		defer cancel()
 
 		if err := s.httpServer.Shutdown(ctx); err != nil {

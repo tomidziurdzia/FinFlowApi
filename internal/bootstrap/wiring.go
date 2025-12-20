@@ -1,21 +1,63 @@
 package bootstrap
 
 import (
-	"os"
+	"log"
 
+	"fin-flow-api/internal/infrastructure/config"
+	"fin-flow-api/internal/infrastructure/db"
+	"fin-flow-api/internal/infrastructure/hash"
 	httptransport "fin-flow-api/internal/interfaces/http"
+	userservices "fin-flow-api/internal/users/application/services"
+	userpostgres "fin-flow-api/internal/users/infrastructure/persistence/postgres"
 )
 
 type App struct {
-	Server *httptransport.Server
+	Server     *httptransport.Server
+	DB         *db.DB
+	Config     *config.Config
+	UserService *userservices.UserService
 }
 
 func NewApp() (*App, error) {
-	cfg := httptransport.Config{
-		Addr: os.Getenv("PORT"),
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
 	}
 
-	srv := httptransport.NewServer(cfg)
+	database, err := db.NewDB(&cfg.Database)
+	if err != nil {
+		return nil, err
+	}
 
-	return &App{Server: srv}, nil
+	hashService := hash.NewService()
+
+	userRepo := userpostgres.NewRepository(database.Pool)
+
+	userService := userservices.NewUserService(userRepo, hashService, cfg.App.SystemUser)
+
+	httpCfg := httptransport.Config{
+		Addr:              cfg.Port,
+		ReadTimeout:       cfg.Server.ReadTimeout,
+		ReadHeaderTimeout: cfg.Server.ReadHeaderTimeout,
+		WriteTimeout:      cfg.Server.WriteTimeout,
+		IdleTimeout:        cfg.Server.IdleTimeout,
+		ShutdownTimeout:   cfg.Server.ShutdownTimeout,
+	}
+	srv := httptransport.NewServer(httpCfg)
+
+	log.Println("Application initialized successfully")
+
+	return &App{
+		Server:      srv,
+		DB:          database,
+		Config:      cfg,
+		UserService: userService,
+	}, nil
+}
+
+func (a *App) Close() error {
+	if a.DB != nil {
+		a.DB.Close()
+	}
+	return nil
 }

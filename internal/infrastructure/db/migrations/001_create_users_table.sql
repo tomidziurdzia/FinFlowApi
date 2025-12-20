@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(255) PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    modified_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_by VARCHAR(255) NOT NULL,
+    modified_by VARCHAR(255) NOT NULL
+);
