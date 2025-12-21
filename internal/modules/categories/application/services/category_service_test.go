@@ -110,7 +110,7 @@ func TestNewCategoryService(t *testing.T) {
 	service := NewCategoryService(repo, "system")
 
 	if service == nil {
-		t.Error("NewCategoryService returned nil")
+		t.Fatal("NewCategoryService returned nil")
 	}
 	if service.repository != repo {
 		t.Error("repository not set correctly")
