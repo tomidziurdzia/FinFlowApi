@@ -8,9 +8,9 @@ import (
 	"fin-flow-api/internal/infrastructure/hash"
 	"fin-flow-api/internal/infrastructure/jwt"
 	httptransport "fin-flow-api/internal/interfaces/http"
-	userservices "fin-flow-api/internal/users/application/services"
-	userpostgres "fin-flow-api/internal/users/infrastructure/persistence/postgres"
-	usershttp "fin-flow-api/internal/users/interfaces/http"
+	userservices "fin-flow-api/internal/modules/users/application/services"
+	userpostgres "fin-flow-api/internal/modules/users/infrastructure/persistence/postgres"
+	usershttp "fin-flow-api/internal/modules/users/interfaces/http"
 )
 
 type App struct {

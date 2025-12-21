@@ -2,7 +2,7 @@ package http
 
 import (
 	"errors"
-	"fin-flow-api/internal/users/domain"
+	"fin-flow-api/internal/modules/users/domain"
 )
 
 type mockUserRepository struct {

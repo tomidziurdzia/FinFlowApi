@@ -2,9 +2,9 @@ package services
 
 import (
 	"errors"
-	"fin-flow-api/internal/users/application/contracts/commands"
-	"fin-flow-api/internal/users/application/contracts/queries"
-	"fin-flow-api/internal/users/domain"
+	"fin-flow-api/internal/modules/users/application/contracts/commands"
+	"fin-flow-api/internal/modules/users/application/contracts/queries"
+	"fin-flow-api/internal/modules/users/domain"
 	"testing"
 )
 

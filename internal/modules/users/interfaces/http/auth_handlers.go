@@ -7,7 +7,7 @@ import (
 	basehandler "fin-flow-api/internal/shared/http"
 	"fin-flow-api/internal/shared/interface/hash"
 	"fin-flow-api/internal/shared/interface/jwt"
-	"fin-flow-api/internal/users/domain"
+	"fin-flow-api/internal/modules/users/domain"
 )
 
 type AuthHandler struct {

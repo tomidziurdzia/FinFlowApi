@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"fin-flow-api/internal/users/domain"
+	"fin-flow-api/internal/modules/users/domain"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

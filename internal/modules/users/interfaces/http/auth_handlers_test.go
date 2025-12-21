@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"fin-flow-api/internal/users/domain"
+	"fin-flow-api/internal/modules/users/domain"
 )
 
 func TestLogin_Success(t *testing.T) {
