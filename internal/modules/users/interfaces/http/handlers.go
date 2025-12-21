@@ -8,9 +8,9 @@ import (
 
 	basehandler "fin-flow-api/internal/shared/http"
 	"fin-flow-api/internal/shared/middleware"
-	"fin-flow-api/internal/users/application/contracts/commands"
-	"fin-flow-api/internal/users/application/contracts/queries"
-	userservices "fin-flow-api/internal/users/application/services"
+	"fin-flow-api/internal/modules/users/application/contracts/commands"
+	"fin-flow-api/internal/modules/users/application/contracts/queries"
+	userservices "fin-flow-api/internal/modules/users/application/services"
 )
 
 type Handler struct {

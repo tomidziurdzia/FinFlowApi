@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"fin-flow-api/internal/shared/middleware"
-	"fin-flow-api/internal/users/application/services"
-	"fin-flow-api/internal/users/domain"
+	"fin-flow-api/internal/modules/users/application/services"
+	"fin-flow-api/internal/modules/users/domain"
 )
 
 func TestCreateUser_Success(t *testing.T) {

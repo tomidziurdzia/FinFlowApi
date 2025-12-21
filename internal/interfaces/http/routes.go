@@ -3,8 +3,8 @@ package http
 import (
 	"net/http"
 
+	usershttp "fin-flow-api/internal/modules/users/interfaces/http"
 	"fin-flow-api/internal/shared/interface/jwt"
-	usershttp "fin-flow-api/internal/users/interfaces/http"
 )
 
 func SetupRoutes(mux *http.ServeMux, jwtService jwt.Service) {

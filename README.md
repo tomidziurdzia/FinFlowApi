@@ -73,8 +73,7 @@ FinFlowApi/
 │   │   ├── config/             # Configuración
 │   │   ├── db/                 # Base de datos
 │   │   ├── hash/               # Hashing
-│   │   ├── jwt/                # JWT
-│   │   └── time_service/       # Servicio de tiempo
+│   │   └── jwt/                # JWT
 │   │
 │   └── bootstrap/              # Wiring de dependencias
 │       └── wiring.go           # Construcción de dependencias
