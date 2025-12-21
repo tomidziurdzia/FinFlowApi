@@ -350,8 +350,8 @@ func TestRepository_List_Empty(t *testing.T) {
 		t.Fatalf("List failed: %v", err)
 	}
 
-	if len(users) < 0 {
-		t.Errorf("expected at least 0 users, got %d", len(users))
+	if len(users) != 0 {
+		t.Errorf("expected 0 users, got %d", len(users))
 	}
 }
 
