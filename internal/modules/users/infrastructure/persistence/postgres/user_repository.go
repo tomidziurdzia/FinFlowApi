@@ -55,9 +55,10 @@ func (r *Repository) GetByID(id string) (*domain.User, error) {
 	`
 
 	var user domain.User
+	var authID *string
 	err := r.pool.QueryRow(context.Background(), query, id).Scan(
 		&user.ID,
-		&user.AuthID,
+		&authID,
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
@@ -73,6 +74,10 @@ func (r *Repository) GetByID(id string) (*domain.User, error) {
 			return nil, fmt.Errorf("user not found")
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if authID != nil {
+		user.AuthID = *authID
 	}
 
 	return &user, nil
@@ -86,9 +91,10 @@ func (r *Repository) GetByEmail(email string) (*domain.User, error) {
 	`
 
 	var user domain.User
+	var authID *string
 	err := r.pool.QueryRow(context.Background(), query, email).Scan(
 		&user.ID,
-		&user.AuthID,
+		&authID,
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
@@ -106,6 +112,10 @@ func (r *Repository) GetByEmail(email string) (*domain.User, error) {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
+	if authID != nil {
+		user.AuthID = *authID
+	}
+
 	return &user, nil
 }
 
@@ -117,9 +127,10 @@ func (r *Repository) GetByAuthID(authID string) (*domain.User, error) {
 	`
 
 	var user domain.User
+	var authIDValue *string
 	err := r.pool.QueryRow(context.Background(), query, authID).Scan(
 		&user.ID,
-		&user.AuthID,
+		&authIDValue,
 		&user.FirstName,
 		&user.LastName,
 		&user.Email,
@@ -135,6 +146,10 @@ func (r *Repository) GetByAuthID(authID string) (*domain.User, error) {
 			return nil, fmt.Errorf("user not found")
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if authIDValue != nil {
+		user.AuthID = *authIDValue
 	}
 
 	return &user, nil
@@ -200,9 +215,10 @@ func (r *Repository) List() ([]*domain.User, error) {
 	var users []*domain.User
 	for rows.Next() {
 		var user domain.User
+		var authID *string
 		err := rows.Scan(
 			&user.ID,
-			&user.AuthID,
+			&authID,
 			&user.FirstName,
 			&user.LastName,
 			&user.Email,
@@ -214,6 +230,9 @@ func (r *Repository) List() ([]*domain.User, error) {
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+		if authID != nil {
+			user.AuthID = *authID
 		}
 		users = append(users, &user)
 	}
