@@ -8,6 +8,8 @@ API de gestión financiera construida con Go y Domain-Driven Design (DDD).
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Bounded Contexts](#bounded-contexts)
 - [Capas de la Aplicación](#capas-de-la-aplicación)
+- [API Endpoints](#api-endpoints)
+- [Autenticación](#autenticación)
 - [Uso](#uso)
 - [Desarrollo](#desarrollo)
 
@@ -210,23 +212,104 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 ```
 1. HTTP Request
    ↓
-2. HTTP Handler (interfaces/http)
-   - Convierte Request → Contract
+2. CORS Middleware
+   - Agrega headers CORS
    ↓
-3. Application Handler (application/commands o queries)
-   - Valida
+3. Auth Middleware (si requiere autenticación)
+   - Valida JWT o Clerk Token
+   - Extrae userID/authID del contexto
+   ↓
+4. HTTP Handler (interfaces/http)
+   - Convierte Request → Contract
+   - Valida entrada
+   ↓
+5. Application Service (application/services)
+   - Orquesta lógica de negocio
    - Usa Domain (NewUser, etc.)
    - Llama Repository
    ↓
-4. Domain (domain/)
-   - Lógica de negocio
+6. Domain (domain/)
+   - Lógica de negocio pura
    ↓
-5. Infrastructure (infrastructure/persistence)
-   - Persiste en DB/memoria
+7. Infrastructure (infrastructure/persistence)
+   - Persiste en PostgreSQL
    ↓
-6. Response
+8. Response
    - Domain → Application → HTTP → Client
 ```
+
+## 📡 API Endpoints
+
+### Usuarios
+
+| Method | Route         | Authentication | Description                     |
+| ------ | ------------- | -------------- | ------------------------------- |
+| POST   | `/users`      | ❌ No          | Crear usuario (registro)        |
+| POST   | `/users/sync` | ✅ Clerk Token | Sincronizar usuario desde Clerk |
+| GET    | `/users`      | ✅ JWT Token   | Listar todos los usuarios       |
+| GET    | `/users/{id}` | ✅ JWT Token   | Obtener usuario por ID          |
+| PUT    | `/users/{id}` | ✅ JWT Token   | Actualizar usuario              |
+| DELETE | `/users/{id}` | ✅ JWT Token   | Eliminar usuario                |
+
+### Autenticación
+
+| Method | Route         | Authentication | Description         |
+| ------ | ------------- | -------------- | ------------------- |
+| POST   | `/auth/login` | ❌ No          | Login y obtener JWT |
+
+### Health Check
+
+| Method | Route     | Authentication | Description  |
+| ------ | --------- | -------------- | ------------ |
+| GET    | `/health` | ❌ No          | Health check |
+
+## 🔐 Autenticación
+
+### JWT Authentication
+
+Para endpoints protegidos con JWT, incluye el token en el header:
+
+```http
+Authorization: Bearer <tu_jwt_token>
+```
+
+**Flujo de Login:**
+
+1. POST `/auth/login` con `{email, password}`
+2. El servidor valida credenciales
+3. Retorna `{token, user}` con el JWT token
+
+**Endpoints que requieren JWT:**
+
+- `GET /users`
+- `GET /users/{id}`
+- `PUT /users/{id}`
+- `DELETE /users/{id}`
+
+### Clerk Authentication
+
+Para sincronizar usuarios desde Clerk, usa el token de Clerk:
+
+```http
+Authorization: Bearer <clerk_jwt_token>
+```
+
+**Flujo de Sync:**
+
+1. Frontend obtiene token de Clerk después de login/signup
+2. POST `/users/sync` con el token de Clerk en el header
+3. El servidor extrae `authID`, `firstName`, `lastName`, `email` del token
+4. Si el usuario no existe, lo crea; si existe, lo retorna
+
+**Endpoints que requieren Clerk Token:**
+
+- `POST /users/sync`
+
+### Middleware
+
+- **CORS Middleware**: Agrega headers CORS para permitir requests desde el frontend
+- **Auth Middleware**: Valida tokens JWT y extrae `userID` del contexto
+- **Clerk Auth Middleware**: Valida tokens de Clerk y extrae `authID`, `firstName`, `lastName`, `email` del contexto
 
 ## 📝 Ejemplo de Uso
 
@@ -289,7 +372,18 @@ DB_USER=postgres
 DB_PASSWORD=tu_password
 DB_NAME=finflow
 DB_SSLMODE=disable
+
+# O usar DATABASE_URL (para Railway/Heroku):
+DATABASE_URL=postgres://user:password@host:port/dbname
+
+# JWT Configuration
+JWT_SECRET=tu_secret_jwt_muy_seguro
+
+# App Configuration
+APP_SYSTEM_USER=system
 ```
+
+**Nota**: Si usas Railway o Heroku, puedes usar `DATABASE_URL` en lugar de las variables individuales `DB_*`.
 
 3. **Crear la base de datos**:
 
@@ -302,19 +396,56 @@ psql -U postgres -c "CREATE DATABASE finflow;"
 4. **Ejecutar migraciones**:
 
 ```bash
+# Usando Makefile (recomendado):
+make migrate
+
+# O manualmente:
 psql -U postgres -d finflow -f internal/infrastructure/db/migrations/001_create_users_table.sql
+psql -U postgres -d finflow -f internal/infrastructure/db/migrations/002_add_auth_id_to_users.sql
+```
+
+### Makefile
+
+El proyecto incluye un `Makefile` con comandos útiles:
+
+```bash
+# Compilar
+make build
+
+# Ejecutar
+make run
+
+# Ejecutar tests
+make test
+
+# Ejecutar migraciones
+make migrate
+
+# Ver estado de migraciones
+make migrate-status
+
+# Verificar conexión a la base de datos
+make db-verify
+
+# Limpiar archivos compilados
+make clean
 ```
 
 ### Compilar
 
 ```bash
 go build ./cmd/api
+# O usando Makefile:
+make build
 ```
 
 ### Ejecutar
 
 ```bash
 ./api
+# O usando Makefile:
+make run
+
 # O con variables de entorno explícitas:
 PORT=8080 DB_HOST=localhost DB_USER=postgres DB_PASSWORD=password DB_NAME=finflow ./api
 ```
@@ -323,6 +454,8 @@ PORT=8080 DB_HOST=localhost DB_USER=postgres DB_PASSWORD=password DB_NAME=finflo
 
 ```bash
 go test ./...
+# O usando Makefile:
+make test
 ```
 
 ### Estructura de Tests
@@ -372,14 +505,28 @@ type User struct {
 - Handlers reciben dependencias por constructor
 - Facilita testing y mantenimiento
 
-## 🚀 Próximos Pasos
+## ✅ Características Implementadas
 
 1. ✅ Repositorio PostgreSQL implementado
-2. Conectar handlers HTTP con application layer
-3. Agregar validaciones
-4. Implementar autenticación/autorización
-5. Agregar más bounded contexts (Transactions, Accounts, etc.)
-6. Implementar sistema de migraciones automático
+2. ✅ Handlers HTTP conectados con application layer
+3. ✅ Validaciones de entrada para creación de usuarios
+4. ✅ Autenticación/autorización con JWT
+5. ✅ Integración con Clerk para sincronización de usuarios
+6. ✅ CORS middleware configurado
+7. ✅ Sistema de migraciones con Makefile
+8. ✅ Tests unitarios completos
+9. ✅ Graceful shutdown del servidor
+10. ✅ Soporte para `DATABASE_URL` (Railway/Heroku compatible)
+
+## 🚀 Próximos Pasos
+
+1. Agregar más bounded contexts (Transactions, Accounts, etc.)
+2. Implementar sistema de migraciones automático más robusto
+3. Agregar logging estructurado
+4. Implementar rate limiting
+5. Agregar documentación OpenAPI/Swagger
+6. Implementar paginación para listados
+7. Agregar filtros y búsqueda
 
 ## 📚 Referencias
 

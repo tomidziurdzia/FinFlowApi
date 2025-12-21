@@ -251,33 +251,79 @@ sequenceDiagram
     end
 ```
 
+## 7. Sync User from Clerk (POST /users/sync)
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant CORS
+    participant ClerkMiddleware
+    participant Handler
+    participant UserService
+    participant Repository
+    participant Database
+
+    Client->>CORS: POST /users/sync<br/>Header: Authorization: Bearer clerk_token
+    CORS->>CORS: Add CORS headers
+    CORS->>ClerkMiddleware: Request
+    ClerkMiddleware->>ClerkMiddleware: Extract token from header
+    ClerkMiddleware->>ClerkMiddleware: Parse JWT claims
+    alt Invalid token
+        ClerkMiddleware-->>Client: 401 Unauthorized
+    else Valid token
+        ClerkMiddleware->>ClerkMiddleware: Extract claims (sub, given_name, family_name, email)
+        ClerkMiddleware->>ClerkMiddleware: Save authID, firstName, lastName, email in context
+        ClerkMiddleware->>Handler: Request with context
+        Handler->>Handler: Get authID, firstName, lastName, email from context
+        Handler->>UserService: SyncByAuthID(authID, firstName, lastName, email)
+        UserService->>Repository: GetByAuthID(authID)
+        Repository->>Database: SELECT * FROM users WHERE auth_id = ?
+        alt User not found
+            Database-->>Repository: No rows
+            Repository-->>UserService: Error (user not found)
+            UserService->>UserService: Generate UUID
+            UserService->>UserService: NewUserWithAuthID(id, authID, firstName, lastName, email, "", systemUser)
+            UserService->>Repository: Create(newUser)
+            Repository->>Database: INSERT INTO users (id, auth_id, first_name, last_name, email, ...)
+            Database-->>Repository: OK
+            Repository-->>UserService: OK
+            UserService-->>Handler: UserResponse
+            Handler-->>Client: 200 OK {id, first_name, last_name, email}
+        else User found
+            Database-->>Repository: User data
+            Repository-->>UserService: User
+            UserService-->>Handler: UserResponse
+            Handler-->>Client: 200 OK {id, first_name, last_name, email}
+        end
+    end
+```
+
 ## General Architecture Diagram
 
 ```mermaid
 graph TB
-    subgraph "Client"
-        Client[Frontend/Client]
-    end
+    Client[Frontend/Client]
 
-    subgraph "HTTP Layer"
+    subgraph HTTP["HTTP Layer"]
         CORS[CORS Middleware]
         Auth[Auth Middleware]
+        ClerkAuth[Clerk Auth Middleware]
         Routes[Routes]
         Handlers[HTTP Handlers]
     end
 
-    subgraph "Application Layer"
+    subgraph APP["Application Layer"]
         UserService[UserService]
         AuthHandler[AuthHandler]
         Validator[Validator]
     end
 
-    subgraph "Domain Layer"
+    subgraph DOMAIN["Domain Layer"]
         User[User Entity]
         Repository[Repository Interface]
     end
 
-    subgraph "Infrastructure Layer"
+    subgraph INFRA["Infrastructure Layer"]
         PostgresRepo[PostgreSQL Repository]
         HashService[Hash Service]
         JWTService[JWT Service]
@@ -286,7 +332,9 @@ graph TB
 
     Client -->|HTTP Request| CORS
     CORS -->|Add CORS headers| Auth
+    CORS -->|Add CORS headers| ClerkAuth
     Auth -->|Validate JWT| Routes
+    ClerkAuth -->|Validate Clerk Token| Routes
     Routes -->|Route to| Handlers
     Handlers -->|Business Logic| UserService
     Handlers -->|Authentication| AuthHandler
@@ -301,11 +349,12 @@ graph TB
 
 ## Endpoints Summary
 
-| Method | Route         | Authentication | Description                |
-| ------ | ------------- | -------------- | -------------------------- |
-| POST   | `/users`      | ❌ No          | Create user (registration) |
-| POST   | `/auth/login` | ❌ No          | Login and get token        |
-| GET    | `/users`      | ✅ Yes         | List all users             |
-| GET    | `/users/{id}` | ✅ Yes         | Get user by ID             |
-| PUT    | `/users/{id}` | ✅ Yes         | Update user                |
-| DELETE | `/users/{id}` | ✅ Yes         | Delete user                |
+| Method | Route         | Authentication | Description                            |
+| ------ | ------------- | -------------- | -------------------------------------- |
+| POST   | `/users`      | ❌ No          | Create user (registration)             |
+| POST   | `/auth/login` | ❌ No          | Login and get token                    |
+| POST   | `/users/sync` | ✅ Clerk Token | Sync user from Clerk (create/retrieve) |
+| GET    | `/users`      | ✅ JWT Token   | List all users                         |
+| GET    | `/users/{id}` | ✅ JWT Token   | Get user by ID                         |
+| PUT    | `/users/{id}` | ✅ JWT Token   | Update user                            |
+| DELETE | `/users/{id}` | ✅ JWT Token   | Delete user                            |

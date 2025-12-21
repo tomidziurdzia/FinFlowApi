@@ -27,6 +27,10 @@ go.work.sum
 # env file
 .env
 
+# Documentation (internal)
+FLUJO_CREATE_USER.md
+ESTRUCTURA_DDD.md
+
 # Editor/IDE
 # .idea/
 # .vscode/
