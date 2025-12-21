@@ -1,4 +1,4 @@
-.PHONY: help migrate migrate-up migrate-down migrate-status db-verify build run test clean
+.PHONY: help migrate migrate-up migrate-down migrate-status db-verify build run test test-integration clean
 
 help:
 	@echo "Available commands:"
@@ -8,7 +8,8 @@ help:
 	@echo "  make db-verify      - Verify database connection and show users table structure"
 	@echo "  make build          - Build the application"
 	@echo "  make run            - Run the application"
-	@echo "  make test           - Run tests"
+	@echo "  make test           - Run tests (skips integration tests)"
+	@echo "  make test-integration - Run all tests including integration tests"
 	@echo "  make clean          - Clean build artifacts"
 
 migrate migrate-up:
@@ -75,7 +76,11 @@ run:
 	@go run cmd/api/main.go
 
 test:
-	@echo "Running tests..."
+	@echo "Running tests (skipping integration tests)..."
+	@SKIP_DB_TESTS=true go test -v ./...
+
+test-integration:
+	@echo "Running all tests including integration tests..."
 	@go test -v ./...
 
 clean:
