@@ -5,6 +5,7 @@ import (
 
 	categorieshttp "fin-flow-api/internal/modules/categories/interfaces/http"
 	usershttp "fin-flow-api/internal/modules/users/interfaces/http"
+	walletshttp "fin-flow-api/internal/modules/wallets/interfaces/http"
 	"fin-flow-api/internal/shared/interface/jwt"
 )
 
@@ -21,4 +22,5 @@ func mount(mux *http.ServeMux, jwtService jwt.Service) {
 func mountV1(mux *http.ServeMux, jwtService jwt.Service) {
 	usershttp.SetupRoutes(mux, jwtService)
 	categorieshttp.SetupRoutes(mux, jwtService)
+	walletshttp.SetupRoutes(mux, jwtService)
 }

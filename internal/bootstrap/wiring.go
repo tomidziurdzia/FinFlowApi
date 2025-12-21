@@ -14,6 +14,9 @@ import (
 	userservices "fin-flow-api/internal/modules/users/application/services"
 	userpostgres "fin-flow-api/internal/modules/users/infrastructure/persistence/postgres"
 	usershttp "fin-flow-api/internal/modules/users/interfaces/http"
+	walletservices "fin-flow-api/internal/modules/wallets/application/services"
+	walletpostgres "fin-flow-api/internal/modules/wallets/infrastructure/persistence/postgres"
+	walletshttp "fin-flow-api/internal/modules/wallets/interfaces/http"
 )
 
 type App struct {
@@ -40,9 +43,11 @@ func NewApp() (*App, error) {
 
 	userRepo := userpostgres.NewRepository(database.Pool)
 	categoryRepo := categorypostgres.NewRepository(database.Pool)
+	walletRepo := walletpostgres.NewRepository(database.Pool)
 
 	userService := userservices.NewUserService(userRepo, hashService, cfg.App.SystemUser)
 	categoryService := categoryservices.NewCategoryService(categoryRepo, cfg.App.SystemUser)
+	walletService := walletservices.NewWalletService(walletRepo, cfg.App.SystemUser)
 
 	userHandler := usershttp.NewHandler(userService)
 	usershttp.SetHandler(userHandler)
@@ -52,6 +57,9 @@ func NewApp() (*App, error) {
 
 	categoryHandler := categorieshttp.NewHandler(categoryService)
 	categorieshttp.SetHandler(categoryHandler)
+
+	walletHandler := walletshttp.NewHandler(walletService)
+	walletshttp.SetHandler(walletHandler)
 
 	httpCfg := httptransport.Config{
 		Addr:              cfg.Port,
