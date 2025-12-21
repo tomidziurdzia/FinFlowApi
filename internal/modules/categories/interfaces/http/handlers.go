@@ -1,20 +1,29 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
 
 	"fin-flow-api/internal/modules/categories/application/contracts/commands"
-	categoryservices "fin-flow-api/internal/modules/categories/application/services"
+	"fin-flow-api/internal/modules/categories/application/contracts/queries"
 	basehandler "fin-flow-api/internal/shared/http"
 )
 
-type Handler struct {
-	categoryService *categoryservices.CategoryService
+type categoryService interface {
+	Create(ctx context.Context, req commands.CategoryRequest) error
+	GetByID(ctx context.Context, id string) (*queries.CategoryResponse, error)
+	Update(ctx context.Context, id string, req commands.CategoryRequest) error
+	Delete(ctx context.Context, id string) error
+	List(ctx context.Context) ([]*queries.CategoryResponse, error)
 }
 
-func NewHandler(categoryService *categoryservices.CategoryService) *Handler {
+type Handler struct {
+	categoryService categoryService
+}
+
+func NewHandler(categoryService categoryService) *Handler {
 	return &Handler{
 		categoryService: categoryService,
 	}
