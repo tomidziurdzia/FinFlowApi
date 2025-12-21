@@ -8,16 +8,20 @@ import (
 	"fin-flow-api/internal/infrastructure/hash"
 	"fin-flow-api/internal/infrastructure/jwt"
 	httptransport "fin-flow-api/internal/interfaces/http"
+	categoryservices "fin-flow-api/internal/modules/categories/application/services"
+	categorypostgres "fin-flow-api/internal/modules/categories/infrastructure/persistence/postgres"
+	categorieshttp "fin-flow-api/internal/modules/categories/interfaces/http"
 	userservices "fin-flow-api/internal/modules/users/application/services"
 	userpostgres "fin-flow-api/internal/modules/users/infrastructure/persistence/postgres"
 	usershttp "fin-flow-api/internal/modules/users/interfaces/http"
 )
 
 type App struct {
-	Server     *httptransport.Server
-	DB         *db.DB
-	Config     *config.Config
-	UserService *userservices.UserService
+	Server         *httptransport.Server
+	DB             *db.DB
+	Config         *config.Config
+	UserService    *userservices.UserService
+	CategoryService *categoryservices.CategoryService
 }
 
 func NewApp() (*App, error) {
@@ -35,14 +39,19 @@ func NewApp() (*App, error) {
 	jwtService := jwt.NewService()
 
 	userRepo := userpostgres.NewRepository(database.Pool)
+	categoryRepo := categorypostgres.NewRepository(database.Pool)
 
 	userService := userservices.NewUserService(userRepo, hashService, cfg.App.SystemUser)
+	categoryService := categoryservices.NewCategoryService(categoryRepo, cfg.App.SystemUser)
 
 	userHandler := usershttp.NewHandler(userService)
 	usershttp.SetHandler(userHandler)
 
 	authHandler := usershttp.NewAuthHandler(userRepo, hashService, jwtService)
 	usershttp.SetAuthHandler(authHandler)
+
+	categoryHandler := categorieshttp.NewHandler(categoryService)
+	categorieshttp.SetHandler(categoryHandler)
 
 	httpCfg := httptransport.Config{
 		Addr:              cfg.Port,
@@ -57,10 +66,11 @@ func NewApp() (*App, error) {
 	log.Println("Application initialized successfully")
 
 	return &App{
-		Server:      srv,
-		DB:          database,
-		Config:      cfg,
-		UserService: userService,
+		Server:          srv,
+		DB:              database,
+		Config:          cfg,
+		UserService:     userService,
+		CategoryService: categoryService,
 	}, nil
 }
 

@@ -40,7 +40,7 @@ func TestCreateUser_Success(t *testing.T) {
 
 	var response map[string]string
 	json.NewDecoder(rr.Body).Decode(&response)
-	if response["message"] != "User created successfully" {
+	if response["message"] != "User account created successfully" {
 		t.Errorf("expected success message, got %s", response["message"])
 	}
 }

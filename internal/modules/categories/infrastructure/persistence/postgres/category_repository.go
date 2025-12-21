@@ -46,6 +46,21 @@ func (r *Repository) Create(category *domain.Category) error {
 }
 
 func (r *Repository) GetByID(id string, userID string) (*domain.Category, error) {
+	checkQuery := `SELECT user_id FROM categories WHERE id = $1`
+	var categoryUserID string
+	err := r.pool.QueryRow(context.Background(), checkQuery, id).Scan(&categoryUserID)
+	
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("category not found")
+		}
+		return nil, fmt.Errorf("failed to get category: %w", err)
+	}
+	
+	if categoryUserID != userID {
+		return nil, fmt.Errorf("unauthorized access to category")
+	}
+
 	query := `
 		SELECT id, user_id, name, type, created_at, modified_at, created_by, modified_by
 		FROM categories
@@ -54,7 +69,7 @@ func (r *Repository) GetByID(id string, userID string) (*domain.Category, error)
 
 	var category domain.Category
 	var typeValue int
-	err := r.pool.QueryRow(context.Background(), query, id, userID).Scan(
+	err = r.pool.QueryRow(context.Background(), query, id, userID).Scan(
 		&category.ID,
 		&category.UserID,
 		&category.Name,
@@ -120,6 +135,21 @@ func (r *Repository) List(userID string) ([]*domain.Category, error) {
 }
 
 func (r *Repository) Update(category *domain.Category) error {
+	checkQuery := `SELECT user_id FROM categories WHERE id = $1`
+	var categoryUserID string
+	err := r.pool.QueryRow(context.Background(), checkQuery, category.ID).Scan(&categoryUserID)
+	
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("category not found")
+		}
+		return fmt.Errorf("failed to update category: %w", err)
+	}
+	
+	if categoryUserID != category.UserID {
+		return fmt.Errorf("unauthorized access to category")
+	}
+
 	query := `
 		UPDATE categories
 		SET name = $2, type = $3, modified_at = $4, modified_by = $5
@@ -149,6 +179,21 @@ func (r *Repository) Update(category *domain.Category) error {
 }
 
 func (r *Repository) Delete(id string, userID string) error {
+	checkQuery := `SELECT user_id FROM categories WHERE id = $1`
+	var categoryUserID string
+	err := r.pool.QueryRow(context.Background(), checkQuery, id).Scan(&categoryUserID)
+	
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("category not found")
+		}
+		return fmt.Errorf("failed to delete category: %w", err)
+	}
+	
+	if categoryUserID != userID {
+		return fmt.Errorf("unauthorized access to category")
+	}
+
 	query := `DELETE FROM categories WHERE id = $1 AND user_id = $2`
 
 	result, err := r.pool.Exec(context.Background(), query, id, userID)
