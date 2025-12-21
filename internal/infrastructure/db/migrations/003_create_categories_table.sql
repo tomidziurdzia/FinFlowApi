@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS categories (
     CONSTRAINT unique_user_category_name UNIQUE (user_id, name)
 );
 
-CREATE INDEX idx_categories_user_id ON categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
 
