@@ -39,7 +39,7 @@ func TestRequireAuth_ValidToken(t *testing.T) {
 	}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := GetUserIDFromContext(r)
+		userID, ok := GetUserIDFromContext(r.Context())
 		if !ok {
 			t.Error("UserID should be in context")
 		}
@@ -136,7 +136,7 @@ func TestGetUserIDFromContext(t *testing.T) {
 	var capturedOk bool
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		capturedUserID, capturedOk = GetUserIDFromContext(r)
+		capturedUserID, capturedOk = GetUserIDFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -160,7 +160,7 @@ func TestGetUserIDFromContext(t *testing.T) {
 func TestGetUserIDFromContext_NotInContext(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test", nil)
 
-	userID, ok := GetUserIDFromContext(req)
+	userID, ok := GetUserIDFromContext(req.Context())
 	if ok {
 		t.Error("GetUserIDFromContext should return ok=false when userID is not in context")
 	}

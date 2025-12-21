@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 type CategoryType int
 
 const (
@@ -7,6 +9,8 @@ const (
 	CategoryTypeIncome
 	CategoryTypeInvestment
 )
+
+var ErrInvalidCategoryType = errors.New("invalid category type")
 
 func (ct CategoryType) String() string {
 	switch ct {

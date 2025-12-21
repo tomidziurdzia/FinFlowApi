@@ -1,10 +1,10 @@
 package services
 
 import (
-	"fin-flow-api/internal/shared/interface/hash"
 	"fin-flow-api/internal/modules/users/application/contracts/commands"
 	"fin-flow-api/internal/modules/users/application/contracts/queries"
 	"fin-flow-api/internal/modules/users/domain"
+	"fin-flow-api/internal/shared/interface/hash"
 
 	"github.com/google/uuid"
 )
@@ -43,8 +43,8 @@ func (s *UserService) Create(req commands.CreateUserRequest) error {
 	return s.repository.Create(user)
 }
 
-func (s *UserService) Update(req commands.UpdateUserRequest) error {
-	user, err := s.repository.GetByID(req.ID)
+func (s *UserService) Update(userID string, req commands.UpdateUserRequest) error {
+	user, err := s.repository.GetByID(userID)
 	if err != nil {
 		return err
 	}
@@ -52,17 +52,26 @@ func (s *UserService) Update(req commands.UpdateUserRequest) error {
 	user.FirstName = req.FirstName
 	user.LastName = req.LastName
 	user.Email = req.Email
+
+	if req.Password != "" {
+		hashedPassword, err := s.hashService.Hash(req.Password)
+		if err != nil {
+			return err
+		}
+		user.Password = hashedPassword
+	}
+
 	user.Entity.UpdateModified(s.systemUser)
 
 	return s.repository.Update(user)
 }
 
-func (s *UserService) Delete(req commands.DeleteUserRequest) error {
-	return s.repository.Delete(req.ID)
+func (s *UserService) Delete(userID string) error {
+	return s.repository.Delete(userID)
 }
 
-func (s *UserService) GetByID(req queries.GetUserRequest) (*queries.UserResponse, error) {
-	user, err := s.repository.GetByID(req.ID)
+func (s *UserService) GetByID(userID string) (*queries.UserResponse, error) {
+	user, err := s.repository.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +88,7 @@ func (s *UserService) GetByID(req queries.GetUserRequest) (*queries.UserResponse
 	}, nil
 }
 
-func (s *UserService) List(req queries.ListUsersRequest) ([]*queries.UserResponse, error) {
+func (s *UserService) List() ([]*queries.UserResponse, error) {
 	users, err := s.repository.List()
 	if err != nil {
 		return nil, err

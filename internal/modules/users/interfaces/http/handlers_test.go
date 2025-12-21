@@ -9,9 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"fin-flow-api/internal/shared/middleware"
 	"fin-flow-api/internal/modules/users/application/services"
 	"fin-flow-api/internal/modules/users/domain"
+	"fin-flow-api/internal/shared/middleware"
 )
 
 func TestCreateUser_Success(t *testing.T) {
@@ -20,7 +20,7 @@ func TestCreateUser_Success(t *testing.T) {
 	userService := services.NewUserService(repo, hashService, "system")
 	handler := NewHandler(userService)
 
-	body := CreateUserRequest{
+	body := UserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "john@example.com",
@@ -78,17 +78,17 @@ func TestCreateUser_InvalidBody(t *testing.T) {
 func TestCreateUser_ValidationErrors(t *testing.T) {
 	tests := []struct {
 		name    string
-		body    CreateUserRequest
+		body    UserRequest
 		wantErr bool
 	}{
-		{"empty first name", CreateUserRequest{LastName: "Doe", Email: "john@example.com", Password: "password123"}, true},
-		{"short first name", CreateUserRequest{FirstName: "J", LastName: "Doe", Email: "john@example.com", Password: "password123"}, true},
-		{"empty last name", CreateUserRequest{FirstName: "John", Email: "john@example.com", Password: "password123"}, true},
-		{"short last name", CreateUserRequest{FirstName: "John", LastName: "D", Email: "john@example.com", Password: "password123"}, true},
-		{"invalid email", CreateUserRequest{FirstName: "John", LastName: "Doe", Email: "invalid-email", Password: "password123"}, true},
-		{"empty password", CreateUserRequest{FirstName: "John", LastName: "Doe", Email: "john@example.com"}, true},
-		{"short password", CreateUserRequest{FirstName: "John", LastName: "Doe", Email: "john@example.com", Password: "short"}, true},
-		{"valid request", CreateUserRequest{FirstName: "John", LastName: "Doe", Email: "john@example.com", Password: "password123"}, false},
+		{"empty first name", UserRequest{LastName: "Doe", Email: "john@example.com", Password: "password123"}, true},
+		{"short first name", UserRequest{FirstName: "J", LastName: "Doe", Email: "john@example.com", Password: "password123"}, true},
+		{"empty last name", UserRequest{FirstName: "John", Email: "john@example.com", Password: "password123"}, true},
+		{"short last name", UserRequest{FirstName: "John", LastName: "D", Email: "john@example.com", Password: "password123"}, true},
+		{"invalid email", UserRequest{FirstName: "John", LastName: "Doe", Email: "invalid-email", Password: "password123"}, true},
+		{"empty password", UserRequest{FirstName: "John", LastName: "Doe", Email: "john@example.com"}, true},
+		{"short password", UserRequest{FirstName: "John", LastName: "Doe", Email: "john@example.com", Password: "short"}, true},
+		{"valid request", UserRequest{FirstName: "John", LastName: "Doe", Email: "john@example.com", Password: "password123"}, false},
 	}
 
 	for _, tt := range tests {
@@ -110,7 +110,7 @@ func TestCreateUser_ServiceError(t *testing.T) {
 	userService := services.NewUserService(repo, hashService, "system")
 	handler := NewHandler(userService)
 
-	body := CreateUserRequest{
+	body := UserRequest{
 		FirstName: "John",
 		LastName:  "Doe",
 		Email:     "john@example.com",
@@ -208,7 +208,7 @@ func TestUpdateUser_Success(t *testing.T) {
 	userService := services.NewUserService(repo, hashService, "system")
 	handler := NewHandler(userService)
 
-	body := UpdateUserRequest{
+	body := UserRequest{
 		FirstName: "Jane",
 		LastName:  "Smith",
 		Email:     "jane@example.com",
