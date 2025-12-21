@@ -6,11 +6,10 @@ import (
 	"regexp"
 	"strings"
 
+	"fin-flow-api/internal/modules/users/application/contracts/commands"
+	userservices "fin-flow-api/internal/modules/users/application/services"
 	basehandler "fin-flow-api/internal/shared/http"
 	"fin-flow-api/internal/shared/middleware"
-	"fin-flow-api/internal/modules/users/application/contracts/commands"
-	"fin-flow-api/internal/modules/users/application/contracts/queries"
-	userservices "fin-flow-api/internal/modules/users/application/services"
 )
 
 type Handler struct {
@@ -29,7 +28,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var reqDTO CreateUserRequest
+	var reqDTO UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqDTO); err != nil {
 		basehandler.WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return
@@ -55,7 +54,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	basehandler.WriteSuccess(w, "User created successfully")
 }
 
-func validateCreateUserRequest(req CreateUserRequest) error {
+func validateCreateUserRequest(req UserRequest) error {
 	req.FirstName = strings.TrimSpace(req.FirstName)
 	if req.FirstName == "" {
 		return &ValidationError{Field: "first_name", Message: "First name is required"}
@@ -110,7 +109,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authenticatedUserID, _ := middleware.GetUserIDFromContext(r)
+	authenticatedUserID, _ := middleware.GetUserIDFromContext(r.Context())
 
 	path := strings.TrimPrefix(r.URL.Path, "/users/")
 	id := strings.Split(path, "/")[0]
@@ -125,11 +124,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := queries.GetUserRequest{
-		ID: id,
-	}
-
-	user, err := h.userService.GetByID(query)
+	user, err := h.userService.GetByID(id)
 	if err != nil {
 		basehandler.WriteError(w, http.StatusNotFound, err.Error())
 		return
@@ -151,7 +146,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authenticatedUserID, ok := middleware.GetUserIDFromContext(r)
+	authenticatedUserID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
 		basehandler.WriteError(w, http.StatusUnauthorized, "User not authenticated")
 		return
@@ -170,20 +165,20 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var reqDTO UpdateUserRequest
+	var reqDTO UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqDTO); err != nil {
 		basehandler.WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	cmd := commands.UpdateUserRequest{
-		ID:        id,
 		FirstName: reqDTO.FirstName,
 		LastName:  reqDTO.LastName,
 		Email:     reqDTO.Email,
+		Password:  reqDTO.Password,
 	}
 
-	if err := h.userService.Update(cmd); err != nil {
+	if err := h.userService.Update(id, cmd); err != nil {
 		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -197,7 +192,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authenticatedUserID, ok := middleware.GetUserIDFromContext(r)
+	authenticatedUserID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok {
 		basehandler.WriteError(w, http.StatusUnauthorized, "User not authenticated")
 		return
@@ -216,11 +211,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := commands.DeleteUserRequest{
-		ID: id,
-	}
-
-	if err := h.userService.Delete(cmd); err != nil {
+	if err := h.userService.Delete(id); err != nil {
 		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -234,9 +225,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := queries.ListUsersRequest{}
-
-	users, err := h.userService.List(query)
+	users, err := h.userService.List()
 	if err != nil {
 		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
 		return

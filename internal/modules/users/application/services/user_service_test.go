@@ -3,7 +3,6 @@ package services
 import (
 	"errors"
 	"fin-flow-api/internal/modules/users/application/contracts/commands"
-	"fin-flow-api/internal/modules/users/application/contracts/queries"
 	"fin-flow-api/internal/modules/users/domain"
 	"testing"
 )
@@ -204,8 +203,7 @@ func TestUserService_GetByID(t *testing.T) {
 	user := domain.NewUser("user-1", "John", "Doe", "john@example.com", "hashed", "system")
 	repo.users["user-1"] = user
 
-	req := queries.GetUserRequest{ID: "user-1"}
-	response, err := service.GetByID(req)
+	response, err := service.GetByID("user-1")
 	if err != nil {
 		t.Fatalf("GetByID failed: %v", err)
 	}
@@ -224,8 +222,7 @@ func TestUserService_GetByID_NotFound(t *testing.T) {
 	hashService := newMockHashService()
 	service := NewUserService(repo, hashService, "system")
 
-	req := queries.GetUserRequest{ID: "nonexistent"}
-	_, err := service.GetByID(req)
+	_, err := service.GetByID("nonexistent")
 	if err == nil {
 		t.Error("GetByID should fail when user not found")
 	}
@@ -240,13 +237,12 @@ func TestUserService_Update(t *testing.T) {
 	repo.users["user-1"] = user
 
 	req := commands.UpdateUserRequest{
-		ID:        "user-1",
 		FirstName: "Jane",
 		LastName:  "Smith",
 		Email:     "jane@example.com",
 	}
 
-	err := service.Update(req)
+	err := service.Update("user-1", req)
 	if err != nil {
 		t.Fatalf("Update failed: %v", err)
 	}
@@ -271,13 +267,12 @@ func TestUserService_Update_NotFound(t *testing.T) {
 	service := NewUserService(repo, hashService, "system")
 
 	req := commands.UpdateUserRequest{
-		ID:        "nonexistent",
 		FirstName: "Jane",
 		LastName:  "Smith",
 		Email:     "jane@example.com",
 	}
 
-	err := service.Update(req)
+	err := service.Update("nonexistent", req)
 	if err == nil {
 		t.Error("Update should fail when user not found")
 	}
@@ -291,8 +286,7 @@ func TestUserService_Delete(t *testing.T) {
 	user := domain.NewUser("user-1", "John", "Doe", "john@example.com", "hashed", "system")
 	repo.users["user-1"] = user
 
-	req := commands.DeleteUserRequest{ID: "user-1"}
-	err := service.Delete(req)
+	err := service.Delete("user-1")
 	if err != nil {
 		t.Fatalf("Delete failed: %v", err)
 	}
@@ -307,8 +301,7 @@ func TestUserService_Delete_NotFound(t *testing.T) {
 	hashService := newMockHashService()
 	service := NewUserService(repo, hashService, "system")
 
-	req := commands.DeleteUserRequest{ID: "nonexistent"}
-	err := service.Delete(req)
+	err := service.Delete("nonexistent")
 	if err == nil {
 		t.Error("Delete should fail when user not found")
 	}
@@ -324,8 +317,7 @@ func TestUserService_List(t *testing.T) {
 	repo.users["user-1"] = user1
 	repo.users["user-2"] = user2
 
-	req := queries.ListUsersRequest{}
-	responses, err := service.List(req)
+	responses, err := service.List()
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}
@@ -340,8 +332,7 @@ func TestUserService_List_Empty(t *testing.T) {
 	hashService := newMockHashService()
 	service := NewUserService(repo, hashService, "system")
 
-	req := queries.ListUsersRequest{}
-	responses, err := service.List(req)
+	responses, err := service.List()
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}

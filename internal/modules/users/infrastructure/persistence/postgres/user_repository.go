@@ -158,7 +158,7 @@ func (r *Repository) GetByAuthID(authID string) (*domain.User, error) {
 func (r *Repository) Update(user *domain.User) error {
 	query := `
 		UPDATE users
-		SET first_name = $2, last_name = $3, email = $4, modified_at = $5, modified_by = $6
+		SET first_name = $2, last_name = $3, email = $4, password = $5, modified_at = $6, modified_by = $7
 		WHERE id = $1
 	`
 
@@ -169,6 +169,7 @@ func (r *Repository) Update(user *domain.User) error {
 		user.FirstName,
 		user.LastName,
 		user.Email,
+		user.Password,
 		user.ModifiedAt,
 		user.ModifiedBy,
 	)

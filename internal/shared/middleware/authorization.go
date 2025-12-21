@@ -44,7 +44,7 @@ func RequireAuth(jwtService jwt.Service) func(http.Handler) http.Handler {
 	}
 }
 
-func GetUserIDFromContext(r *http.Request) (string, bool) {
-	userID, ok := r.Context().Value(UserIDKey).(string)
+func GetUserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(UserIDKey).(string)
 	return userID, ok
 }
