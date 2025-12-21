@@ -30,7 +30,7 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	var reqDTO UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqDTO); err != nil {
-		basehandler.WriteError(w, http.StatusBadRequest, "Invalid request body")
+		basehandler.WriteError(w, http.StatusBadRequest, "Invalid JSON format in request body")
 		return
 	}
 
@@ -47,11 +47,19 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userService.Create(cmd); err != nil {
-		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
+		statusCode := http.StatusInternalServerError
+		errorMsg := err.Error()
+		
+		if strings.Contains(errorMsg, "email already exists") {
+			statusCode = http.StatusConflict
+			errorMsg = "An account with this email address already exists"
+		}
+		
+		basehandler.WriteError(w, statusCode, errorMsg)
 		return
 	}
 
-	basehandler.WriteSuccess(w, "User created successfully")
+	basehandler.WriteSuccess(w, "User account created successfully")
 }
 
 func validateCreateUserRequest(req UserRequest) error {
@@ -60,7 +68,10 @@ func validateCreateUserRequest(req UserRequest) error {
 		return &ValidationError{Field: "first_name", Message: "First name is required"}
 	}
 	if len(req.FirstName) < 2 {
-		return &ValidationError{Field: "first_name", Message: "First name must be at least 2 characters"}
+		return &ValidationError{Field: "first_name", Message: "First name must be at least 2 characters long"}
+	}
+	if len(req.FirstName) > 255 {
+		return &ValidationError{Field: "first_name", Message: "First name must not exceed 255 characters"}
 	}
 
 	req.LastName = strings.TrimSpace(req.LastName)
@@ -68,22 +79,31 @@ func validateCreateUserRequest(req UserRequest) error {
 		return &ValidationError{Field: "last_name", Message: "Last name is required"}
 	}
 	if len(req.LastName) < 2 {
-		return &ValidationError{Field: "last_name", Message: "Last name must be at least 2 characters"}
+		return &ValidationError{Field: "last_name", Message: "Last name must be at least 2 characters long"}
+	}
+	if len(req.LastName) > 255 {
+		return &ValidationError{Field: "last_name", Message: "Last name must not exceed 255 characters"}
 	}
 
 	req.Email = strings.TrimSpace(req.Email)
 	if req.Email == "" {
-		return &ValidationError{Field: "email", Message: "Email is required"}
+		return &ValidationError{Field: "email", Message: "Email address is required"}
+	}
+	if len(req.Email) > 255 {
+		return &ValidationError{Field: "email", Message: "Email address must not exceed 255 characters"}
 	}
 	if !isValidEmail(req.Email) {
-		return &ValidationError{Field: "email", Message: "Invalid email format"}
+		return &ValidationError{Field: "email", Message: "Invalid email address format"}
 	}
 
 	if req.Password == "" {
 		return &ValidationError{Field: "password", Message: "Password is required"}
 	}
 	if len(req.Password) < 8 {
-		return &ValidationError{Field: "password", Message: "Password must be at least 8 characters"}
+		return &ValidationError{Field: "password", Message: "Password must be at least 8 characters long"}
+	}
+	if len(req.Password) > 255 {
+		return &ValidationError{Field: "password", Message: "Password must not exceed 255 characters"}
 	}
 
 	return nil
@@ -115,7 +135,7 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id := strings.Split(path, "/")[0]
 
 	if id == "" {
-		basehandler.WriteError(w, http.StatusBadRequest, "User ID is required")
+		basehandler.WriteError(w, http.StatusBadRequest, "User ID is required in the URL path")
 		return
 	}
 
@@ -126,7 +146,14 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userService.GetByID(id)
 	if err != nil {
-		basehandler.WriteError(w, http.StatusNotFound, err.Error())
+		statusCode := http.StatusNotFound
+		errorMsg := err.Error()
+		
+		if strings.Contains(errorMsg, "user not found") {
+			errorMsg = "User not found"
+		}
+		
+		basehandler.WriteError(w, statusCode, errorMsg)
 		return
 	}
 
@@ -156,7 +183,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id := strings.Split(path, "/")[0]
 
 	if id == "" {
-		basehandler.WriteError(w, http.StatusBadRequest, "User ID is required")
+		basehandler.WriteError(w, http.StatusBadRequest, "User ID is required in the URL path")
 		return
 	}
 
@@ -167,7 +194,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	var reqDTO UserRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqDTO); err != nil {
-		basehandler.WriteError(w, http.StatusBadRequest, "Invalid request body")
+		basehandler.WriteError(w, http.StatusBadRequest, "Invalid JSON format in request body")
 		return
 	}
 
@@ -179,11 +206,22 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userService.Update(id, cmd); err != nil {
-		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
+		statusCode := http.StatusInternalServerError
+		errorMsg := err.Error()
+		
+		if strings.Contains(errorMsg, "email already exists") {
+			statusCode = http.StatusConflict
+			errorMsg = "An account with this email address already exists"
+		} else if strings.Contains(errorMsg, "user not found") {
+			statusCode = http.StatusNotFound
+			errorMsg = "User not found"
+		}
+		
+		basehandler.WriteError(w, statusCode, errorMsg)
 		return
 	}
 
-		basehandler.WriteSuccess(w, "User updated successfully")
+	basehandler.WriteSuccess(w, "User profile updated successfully")
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +240,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := strings.Split(path, "/")[0]
 
 	if id == "" {
-		basehandler.WriteError(w, http.StatusBadRequest, "User ID is required")
+		basehandler.WriteError(w, http.StatusBadRequest, "User ID is required in the URL path")
 		return
 	}
 
@@ -212,11 +250,19 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userService.Delete(id); err != nil {
-		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
+		statusCode := http.StatusInternalServerError
+		errorMsg := err.Error()
+		
+		if strings.Contains(errorMsg, "user not found") {
+			statusCode = http.StatusNotFound
+			errorMsg = "User not found"
+		}
+		
+		basehandler.WriteError(w, statusCode, errorMsg)
 		return
 	}
 
-		basehandler.WriteSuccess(w, "User deleted successfully")
+	basehandler.WriteSuccess(w, "User account deleted successfully")
 }
 
 func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {

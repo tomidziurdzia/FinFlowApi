@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"fin-flow-api/internal/modules/users/domain"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,11 +27,16 @@ func (r *Repository) Create(user *domain.User) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	`
 
+	var authID *string
+	if user.AuthID != "" {
+		authID = &user.AuthID
+	}
+
 	_, err := r.pool.Exec(
 		context.Background(),
 		query,
 		user.ID,
-		user.AuthID,
+		authID,
 		user.FirstName,
 		user.LastName,
 		user.Email,
@@ -41,6 +48,20 @@ func (r *Repository) Create(user *domain.User) error {
 	)
 
 	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			case "23505": // unique_violation
+				if strings.Contains(pgErr.ConstraintName, "email") {
+					return fmt.Errorf("email already exists")
+				}
+				if strings.Contains(pgErr.ConstraintName, "auth_id") {
+					return fmt.Errorf("auth_id already exists")
+				}
+				return fmt.Errorf("duplicate entry")
+			case "23503": // foreign_key_violation
+				return fmt.Errorf("invalid reference")
+			}
+		}
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
@@ -175,6 +196,15 @@ func (r *Repository) Update(user *domain.User) error {
 	)
 
 	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			switch pgErr.Code {
+			case "23505": // unique_violation
+				if strings.Contains(pgErr.ConstraintName, "email") {
+					return fmt.Errorf("email already exists")
+				}
+				return fmt.Errorf("duplicate entry")
+			}
+		}
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
