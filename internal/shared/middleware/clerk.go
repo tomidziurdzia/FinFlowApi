@@ -13,6 +13,7 @@ import (
 const ClerkAuthIDKey contextKey = "clerkAuthID"
 const ClerkFirstNameKey contextKey = "clerkFirstName"
 const ClerkLastNameKey contextKey = "clerkLastName"
+const ClerkEmailKey contextKey = "clerkEmail"
 
 func RequireClerkAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +31,7 @@ func RequireClerkAuth(next http.Handler) http.Handler {
 
 		tokenString := parts[1]
 
-		authID, firstName, lastName, err := extractClerkClaims(tokenString)
+		authID, firstName, lastName, email, err := extractClerkClaims(tokenString)
 		if err != nil {
 			basehandler.WriteError(w, http.StatusUnauthorized, "Invalid or expired token")
 			return
@@ -39,16 +40,17 @@ func RequireClerkAuth(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), ClerkAuthIDKey, authID)
 		ctx = context.WithValue(ctx, ClerkFirstNameKey, firstName)
 		ctx = context.WithValue(ctx, ClerkLastNameKey, lastName)
+		ctx = context.WithValue(ctx, ClerkEmailKey, email)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-func extractClerkClaims(tokenString string) (authID, firstName, lastName string, err error) {
+func extractClerkClaims(tokenString string) (authID, firstName, lastName, email string, err error) {
 	claims, err := parseJWTClaims(tokenString)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
 	if sub, ok := claims["sub"].(string); ok {
@@ -56,16 +58,23 @@ func extractClerkClaims(tokenString string) (authID, firstName, lastName string,
 	}
 	if fn, ok := claims["first_name"].(string); ok {
 		firstName = fn
+	} else if fn, ok := claims["given_name"].(string); ok {
+		firstName = fn
 	}
 	if ln, ok := claims["last_name"].(string); ok {
 		lastName = ln
+	} else if ln, ok := claims["family_name"].(string); ok {
+		lastName = ln
+	}
+	if em, ok := claims["email"].(string); ok {
+		email = em
 	}
 
 	if authID == "" {
-		return "", "", "", http.ErrAbortHandler
+		return "", "", "", "", http.ErrAbortHandler
 	}
 
-	return authID, firstName, lastName, nil
+	return authID, firstName, lastName, email, nil
 }
 
 func parseJWTClaims(tokenString string) (map[string]interface{}, error) {
@@ -97,4 +106,9 @@ func GetClerkNameFromContext(r *http.Request) (firstName, lastName string, ok bo
 	firstName, firstNameOk := r.Context().Value(ClerkFirstNameKey).(string)
 	lastName, lastNameOk := r.Context().Value(ClerkLastNameKey).(string)
 	return firstName, lastName, firstNameOk && lastNameOk
+}
+
+func GetClerkEmailFromContext(r *http.Request) (string, bool) {
+	email, ok := r.Context().Value(ClerkEmailKey).(string)
+	return email, ok
 }

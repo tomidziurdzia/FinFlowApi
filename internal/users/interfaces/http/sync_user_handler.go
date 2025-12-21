@@ -25,7 +25,12 @@ func (h *Handler) SyncUser(w http.ResponseWriter, r *http.Request) {
 		lastName = ""
 	}
 
-	user, err := h.userService.SyncByAuthID(authID, firstName, lastName)
+	email, emailOk := middleware.GetClerkEmailFromContext(r)
+	if !emailOk {
+		email = ""
+	}
+
+	user, err := h.userService.SyncByAuthID(authID, firstName, lastName, email)
 	if err != nil {
 		basehandler.WriteError(w, http.StatusInternalServerError, err.Error())
 		return

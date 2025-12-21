@@ -102,7 +102,7 @@ func (s *UserService) List(req queries.ListUsersRequest) ([]*queries.UserRespons
 	return responses, nil
 }
 
-func (s *UserService) SyncByAuthID(authID, firstName, lastName string) (*queries.UserResponse, error) {
+func (s *UserService) SyncByAuthID(authID, firstName, lastName, email string) (*queries.UserResponse, error) {
 	user, err := s.repository.GetByAuthID(authID)
 	if err != nil {
 		if err.Error() == "user not found" {
@@ -112,7 +112,7 @@ func (s *UserService) SyncByAuthID(authID, firstName, lastName string) (*queries
 				authID,
 				firstName,
 				lastName,
-				"",
+				email,
 				"",
 				s.systemUser,
 			)
